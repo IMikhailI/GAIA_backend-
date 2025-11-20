@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GAIA — пространство для ваших мероприятий</title>
+</head>
+<body>
+<h1>GAIA</h1>
+<p>Кофейня и пространство для встреч, лекций и мероприятий.</p>
+
+<p><a href="{% url 'booking:create' %}">Забронировать зал →</a></p>
+
+<h2>Наши залы</h2>
+<ul>
+  {% for hall in halls %}
+    <li>
+      <strong>{{ hall.name }}</strong>
+      — {{ hall.capacity }} человек,
+      {{ hall.base_price_per_hour }} ₽/час
+      (<a href="{% url 'halls:detail' hall.slug %}">подробнее</a>)
+    </li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>

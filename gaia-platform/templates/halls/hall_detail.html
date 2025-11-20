@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ hall.name }} — GAIA</title>
+</head>
+<body>
+<h1>{{ hall.name }}</h1>
+
+<p>{{ hall.description }}</p>
+<p>Вместимость: {{ hall.capacity }} человек</p>
+<p>Базовая цена: {{ hall.base_price_per_hour }} ₽/час</p>
+
+<hr>
+
+<h2>Свободные слоты</h2>
+
+<form method="get">
+  <label>
+    Дата:
+    <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+  </label>
+  <button type="submit">Показать</button>
+</form>
+
+{% if available_slots %}
+  <ul>
+    {% for slot in available_slots %}
+      <li>
+        {{ slot|date:"H:i" }}
+        <!-- Кнопка забронировать этот слот -->
+        <a href="{% url 'booking:create' %}?hall={{ hall.id }}&date={{ selected_date|date:'Y-m-d' }}&time={{ slot|date:'H:i' }}">
+          Забронировать
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>На эту дату нет свободных слотов.</p>
+{% endif %}
+
+<p><a href="{% url 'halls:list' %}">← ко всем залам</a></p>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+# === ОС ===
+.DS_Store
+Thumbs.db
+
+# === Виртуальное окружение ===
+venv/
+.venv/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# === Логи и прочий мусор ===
+*.log
+*.pot
+*.mo
+*.cover
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# === Django ===
+db.sqlite3
+media/
+staticfiles/
+
+# Если будешь собирать фронт/статические файлы в отдельную папку:
+static/
+
+# === Конфиги и секреты ===
+.env
+.env.*
+!.env.example
+
+# === Тесты ===
+.pytest_cache/
+.tox/
+.mypy_cache/
+.cache/
+
+# === IDE / редакторы ===
+.vscode/
+.idea/
+*.iml
+
+# === Разное ===
+*.swp
+*.swo
+
