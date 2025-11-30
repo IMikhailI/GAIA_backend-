@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     "landing",
     "halls",
     "booking",
-    "notifications",
+    # "notifications",
+    "notifications.apps.NotificationsConfig",
     "shop",
     "api",
 ]
