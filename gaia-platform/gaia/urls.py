@@ -22,5 +22,6 @@ urlpatterns = [
     path("", include("landing.urls")),
     path("booking/", include("booking.urls")),
     path("halls/", include("halls.urls")),
+    path("api/", include("shop.urls", namespace="shop")),
     path("api/", include("api.urls")),
 ]

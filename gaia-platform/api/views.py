@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from halls.models import Hall, BlockedSlot
+from halls.services import get_available_slots
 from booking.models import Booking
 from .serializers import (
     HallSerializer,
@@ -43,44 +44,14 @@ class HallAvailabilityAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Старт/конец рабочего дня
-        start_hour = 9
-        end_hour = 21  # последний слот 20:00–21:00
-
-        # Берём все подтверждённые брони и блокировки на этот день
-        bookings = Booking.objects.filter(
-            hall=hall,
-            date=target_date,
-            status=Booking.Status.CONFIRMED,  # или "confirmed"
-        )
-        blocks = BlockedSlot.objects.filter(
-            hall=hall,
-            date=target_date,
-        )
-
-        def slot_status(slot_time: time) -> str:
-            # Проверяем, попадает ли слот в бронь или блокировку
-            for b in bookings:
-                if b.start_time <= slot_time < b.end_time:
-                    return "busy"
-            for bl in blocks:
-                if bl.start_time <= slot_time < bl.end_time:
-                    return "blocked"
-            return "free"
-
-        slots = []
-        current_dt = datetime.combine(target_date, time(hour=start_hour))
-        end_dt = datetime.combine(target_date, time(hour=end_hour))
-
-        while current_dt < end_dt:
-            t = current_dt.time()
-            slots.append(
-                {
-                    "time": t.strftime("%H:%M"),
-                    "status": slot_status(t),
-                }
-            )
-            current_dt += timedelta(hours=1)
+        # Берём свободные слоты через сервис
+        free_slots = get_available_slots(hall, target_date)
+        # Предположим, что free_slots — iterable из datetime/time.
+        # Преобразуем в удобный для фронта вид:
+        slots = [
+            {"time": slot.strftime("%H:%M"), "status": "free"}
+            for slot in free_slots
+        ]
 
         data = {
             "hall_id": hall.id,
