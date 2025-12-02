@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 # === Базовые пути ===
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # === .env ===
 load_dotenv(BASE_DIR / ".env")
 
@@ -39,6 +42,7 @@ INSTALLED_APPS = [
     # "notifications",
     "notifications.apps.NotificationsConfig",
     "shop",
+    "menus",
     "api",
 ]
 

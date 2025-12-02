@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Меню кофейни</title>
+</head>
+<body>
+  <h1>Меню кофейни</h1>
+
+  {% if menu_files %}
+    {% for mf in menu_files %}
+      <section style="margin-bottom: 2rem;">
+        <h2>{{ mf.title }}</h2>
+
+        <p>
+          <a href="{{ mf.file.url }}" target="_blank" rel="noopener noreferrer">
+            Открыть PDF в новой вкладке
+          </a>
+        </p>
+
+        <object
+          data="{{ mf.file.url }}"
+          type="application/pdf"
+          width="100%"
+          height="600"
+          style="border: 1px solid #ccc;"
+        >
+          <p>
+            Браузер не может отобразить PDF.
+            <a href="{{ mf.file.url }}" target="_blank" rel="noopener noreferrer">Скачать файл</a>.
+          </p>
+        </object>
+      </section>
+    {% endfor %}
+  {% else %}
+    <p>Меню пока не загружено.</p>
+  {% endif %}
+</body>
+</html>
