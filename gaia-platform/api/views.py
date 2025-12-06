@@ -8,6 +8,11 @@ from rest_framework.views import APIView
 from halls.models import Hall, BlockedSlot
 from halls.services import get_available_slots
 from booking.models import Booking
+from booking.services import (
+    WORK_DAY_START_HOUR,
+    WORK_DAY_END_HOUR,
+    TIME_SLOT_STEP_HOURS,
+)
 from .serializers import (
     HallSerializer,
     BookingSerializer,
@@ -24,6 +29,10 @@ class HallListAPIView(generics.ListAPIView):
 class HallAvailabilityAPIView(APIView):
     """
     GET /api/halls/<id>/availability?date=YYYY-MM-DD
+
+    Возвращает все слоты рабочего дня с пометкой:
+    - "free"  — слот свободен;
+    - "busy"  — слот занят (есть Booking или BlockedSlot).
     """
 
     def get(self, request, pk: int):
@@ -44,14 +53,26 @@ class HallAvailabilityAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Берём свободные слоты через сервис
+        # 1) Берём список свободных слотов через существующий сервис
         free_slots = get_available_slots(hall, target_date)
-        # Предположим, что free_slots — iterable из datetime/time.
-        # Преобразуем в удобный для фронта вид:
-        slots = [
-            {"time": slot.strftime("%H:%M"), "status": "free"}
-            for slot in free_slots
-        ]
+        # free_slots — список datetime. Преобразуем в множество строк "HH:MM"
+        free_times = {slot.strftime("%H:%M") for slot in free_slots}
+
+        # 2) Строим слоты на весь рабочий день
+        slots = []
+        hour = WORK_DAY_START_HOUR
+        while hour < WORK_DAY_END_HOUR:
+            slot_time = time(hour=hour, minute=0)
+            time_str = slot_time.strftime("%H:%M")
+            status_str = "free" if time_str in free_times else "busy"
+
+            slots.append(
+                {
+                    "time": time_str,
+                    "status": status_str,
+                }
+            )
+            hour += TIME_SLOT_STEP_HOURS  # обычно 1 час
 
         data = {
             "hall_id": hall.id,

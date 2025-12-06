@@ -21,7 +21,7 @@ def get_main_menu(is_superadmin_flag: bool = False) -> ReplyKeyboardMarkup:
     keyboard = [
         ["📅 Брони на сегодня", "📅 Брони на завтра"],
         ["🆕 Новые брони", "📈 Все предстоящие брони"],
-        ["📆 Выбрать дату"], ["/menu_list"],
+        ["📆 Выбрать дату"], ["/menu_list"], ["/block_time"],
     ]
 
     if is_superadmin_flag:

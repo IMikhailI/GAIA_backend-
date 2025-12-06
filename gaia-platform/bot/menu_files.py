@@ -42,8 +42,8 @@ def handle_menu_document(update, context):
     title = document.file_name or "Меню"
     menu_file = MenuFile(title=title, sort_order=new_sort)
 
-    menu_file.file.save(document.file_name or "menu.pdf", ContentFile(bio.read()))
-    menu_file.save()
+    menu_file.file.save(document.file_name or "menu.pdf", ContentFile(bio.read()), save=True)
+   # menu_file.save()
 
     message.reply_text(
         f"Файл меню сохранён:\n"
@@ -145,4 +145,6 @@ def menu_file_remove_callback(update, context):
     mf.is_active = False
     mf.save(update_fields=["is_active"])
 
-    query.answer("Файл меню скрыт (не будет виден на сайте).")
+    mf.cleanup_media()
+
+    query.answer("Файл меню скрыт и файлы меню удалены с сервера.")

@@ -48,6 +48,21 @@ class MenuFile(models.Model):
             filename = f"menu_{self.pk}_page_{index}.png"
             page.image.save(filename, ContentFile(buffer.read()), save=True)
 
+    def cleanup_media(self):
+        """
+        Удаляет PDF-файл и все PNG-страницы этого меню с диска и из БД.
+        """
+        # удаляем PNG-страницы
+        for page in self.pages.all():
+            if page.image:
+                page.image.delete(save=False)
+            page.delete()
+
+        # удаляем сам PDF
+        if self.file:
+            self.file.delete(save=False)
+  
+
 
 class MenuPage(models.Model):
     menu_file = models.ForeignKey(

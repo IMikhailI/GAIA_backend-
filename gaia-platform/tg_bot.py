@@ -31,6 +31,9 @@ from bot.menu_files import (
     menu_file_remove_callback,
 )
 
+from bot.block_time import build_block_time_conversation
+
+
 def main():
     token = settings.TELEGRAM_BOT_TOKEN
     updater = Updater(token, use_context=True)
@@ -44,6 +47,8 @@ def main():
     dp.add_handler(CommandHandler("add_staff", add_staff))
     dp.add_handler(CommandHandler("remove_staff", remove_staff))
     dp.add_handler(CommandHandler("menu_list", menu_list))
+
+    dp.add_handler(build_block_time_conversation())
 
     # Все текстовые сообщения (не команды) — работа с меню и вводом даты
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_menu))
@@ -60,7 +65,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(staff_approval_callback, pattern=r"^approve_staff:"))
     dp.add_handler(CallbackQueryHandler(staff_inline_remove_callback, pattern=r"^remove_staff_inline:"))
     dp.add_handler(CallbackQueryHandler(menu_file_remove_callback, pattern=r"^remove_menu_file:"))
-    
+
     # Затем обработчик всех остальных inline-кнопок по бронированиям
     dp.add_handler(CallbackQueryHandler(booking_callback))
 

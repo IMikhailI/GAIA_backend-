@@ -14,14 +14,22 @@ class Hall(models.Model):
     def __str__(self):
         return self.name
 
-
 class BlockedSlot(models.Model):
-    hall = models.ForeignKey(Hall, on_delete=models.CASCADE, related_name="blocked_slots")
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    reason = models.CharField(max_length=255, blank=True)
+    hall = models.ForeignKey(
+        Hall,
+        on_delete=models.CASCADE,
+        related_name="blocked_slots",
+        verbose_name="Зал",
+    )
+    start_time = models.DateTimeField("Начало блока")
+    end_time = models.DateTimeField("Конец блока")
+    reason = models.CharField("Причина", max_length=255, blank=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name = "Блокировка времени"
+        verbose_name_plural = "Блокировки времени"
+        ordering = ["hall", "start_time"]
 
     def __str__(self):
-        return f"{self.hall.name}: {self.start_time} - {self.end_time}"
+        return f"{self.hall} {self.start_time}–{self.end_time}"
