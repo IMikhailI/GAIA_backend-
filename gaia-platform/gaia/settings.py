@@ -18,10 +18,17 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-unsafe-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
-    if host.strip()
+    "95.81.96.133",
+    "localhost",
+    "127.0.0.1",
+    "dobrodomovmikhail.fvds.ru",
 ]
+
+#ALLOWED_HOSTS = [
+#    host.strip()
+#    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+#    if host.strip()
+#]
 
 # === Приложения ===
 INSTALLED_APPS = [
@@ -35,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "corsheaders",
+    "drf_spectacular",
 
     "landing",
     "halls",
@@ -47,6 +55,8 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
@@ -56,6 +66,13 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "GAIA Coffee API",
+    "DESCRIPTION": "API для бронирования залов, меню, магазина и уведомлений",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # Разрешённые origin’ы для фронта (Nuxt)
@@ -147,13 +164,16 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path("/var/www/gaia/staticfiles")
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+#MEDIA_URL = "media/"
+#MEDIA_ROOT = BASE_DIR / "media"
+
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path("/var/www/gaia/media")
 
 # === Email ===
 

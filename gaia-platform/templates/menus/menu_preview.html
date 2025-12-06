@@ -1,39 +1,56 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Меню кофейни</title>
+    <meta charset="UTF-8">
+    <title>Меню</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .menu {
+            margin-bottom: 40px;
+        }
+        .menu-title {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .pages {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .pages img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            background: #fff;
+        }
+    </style>
 </head>
 <body>
-  <h1>Меню кофейни</h1>
 
-  {% if menu_files %}
-    {% for mf in menu_files %}
-      <section style="margin-bottom: 2rem;">
-        <h2>{{ mf.title }}</h2>
+{% if menu_files %}
+    {% for menu in menu_files %}
+        <div class="menu">
+            <div class="menu-title">{{ menu.title }}</div>
 
-        <p>
-          <a href="{{ mf.file.url }}" target="_blank" rel="noopener noreferrer">
-            Открыть PDF в новой вкладке
-          </a>
-        </p>
-
-        <object
-          data="{{ mf.file.url }}"
-          type="application/pdf"
-          width="100%"
-          height="600"
-          style="border: 1px solid #ccc;"
-        >
-          <p>
-            Браузер не может отобразить PDF.
-            <a href="{{ mf.file.url }}" target="_blank" rel="noopener noreferrer">Скачать файл</a>.
-          </p>
-        </object>
-      </section>
+            <div class="pages">
+                {% for page in menu.pages.all %}
+                    <img src="{{ page.image.url }}"
+                         alt="{{ menu.title }} — страница {{ page.page_number }}">
+                {% empty %}
+                    <p>Для этого меню ещё не сгенерированы страницы.</p>
+                {% endfor %}
+            </div>
+        </div>
     {% endfor %}
-  {% else %}
+{% else %}
     <p>Меню пока не загружено.</p>
-  {% endif %}
+{% endif %}
+
 </body>
 </html>
+

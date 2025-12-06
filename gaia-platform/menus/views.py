@@ -13,8 +13,10 @@ class MenuFileListAPIView(generics.ListAPIView):
     serializer_class = MenuFileSerializer
 
 def menu_preview(request):
-    """
-    Страничка для просмотра меню в браузере.
-    """
-    menu_files = MenuFile.objects.filter(is_active=True).order_by("sort_order", "created_at")
+    menu_files = (
+        MenuFile.objects
+        .filter(is_active=True)
+        .prefetch_related("pages")
+        .order_by("sort_order", "created_at")
+    )
     return render(request, "menus/menu_preview.html", {"menu_files": menu_files})

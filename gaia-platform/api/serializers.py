@@ -12,10 +12,9 @@ class HallSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "capacity",
-            "weekday_price_per_hour",
-            "weekend_price_per_hour",
+            "base_price_per_hour",
             "description",
-            "image",
+            "photo",
         ]
 
 
@@ -32,7 +31,6 @@ class BookingSerializer(serializers.ModelSerializer):
             "id",
             "hall",
             "hall_id",
-            "date",
             "start_time",
             "end_time",
             "customer_name",
@@ -125,7 +123,6 @@ class BlockedSlotSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "hall",
-            "date",
             "start_time",
             "end_time",
             "reason",

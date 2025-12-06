@@ -20,6 +20,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("landing.urls")),
@@ -28,7 +33,17 @@ urlpatterns = [
     path("api/", include("menus.urls", namespace="menus")),
     path("api/", include("shop.urls", namespace="shop")),
     path("api/", include("api.urls")),
+    
+    # OpenAPI schema (JSON/YAML)
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    # Swagger UI
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
