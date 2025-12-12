@@ -8,6 +8,9 @@ from .views import (
     AdminBookingConfirmAPIView,
     AdminBookingRejectAPIView,
     AdminBlockCreateAPIView,
+    ReviewListAPIView,
+    BlockedSlotListAPIView,
+    BlockedSlotDestroyAPIView,
 )
 
 app_name = "api"
@@ -35,4 +38,15 @@ urlpatterns = [
         AdminBlockCreateAPIView.as_view(),
         name="admin-block-create",
     ),
+    path(
+        "blocked-slots/",
+        BlockedSlotListAPIView.as_view(),
+        name="blockedslot-list",
+    ),
+    path(
+        "blocked-slots/<int:pk>/",
+        BlockedSlotDestroyAPIView.as_view(),
+        name="blockedslot-detail",
+    ),
+    path("reviews/", ReviewListAPIView.as_view(), name="reviews-list"),
 ]

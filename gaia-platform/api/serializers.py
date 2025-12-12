@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from halls.models import Hall, BlockedSlot
 from booking.models import Booking
-
+from reviews.models import Review
 
 class HallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -118,12 +118,40 @@ class AdminBookingActionSerializer(serializers.Serializer):
 
 
 class BlockedSlotSerializer(serializers.ModelSerializer):
+    hall_name = serializers.CharField(source="hall.name", read_only=True)
+
     class Meta:
         model = BlockedSlot
         fields = [
             "id",
             "hall",
+            "hall_name",
             "start_time",
             "end_time",
             "reason",
         ]
+        read_only_fields = ["id", "hall_name"]
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    photo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = [
+            "id",
+            "name",
+            "photo",
+            "rating",
+            "text",
+            "created_at",
+        ]
+
+    def get_photo(self, obj):
+        request = self.context.get("request")
+        if obj.avatar and hasattr(obj.avatar, "url"):
+            url = obj.avatar.url
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return url
+        return None

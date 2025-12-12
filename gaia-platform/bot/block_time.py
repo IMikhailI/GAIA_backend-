@@ -248,3 +248,84 @@ def build_block_time_conversation():
         persistent=False,
     )
 
+def list_blocked_slots(update: Update, context: CallbackContext):
+    """
+    /blocked_slots — показать список активных блокировок
+    с кнопками для их отмены.
+    """
+    user_id = update.effective_user.id
+    if not is_admin(user_id):
+        update.message.reply_text("У вас нет прав для просмотра блокировок.")
+        return
+
+    now = timezone.now()
+    slots = BlockedSlot.objects.filter(end_time__gte=now).order_by("start_time")
+
+    if not slots.exists():
+        update.message.reply_text("Активных блокировок сейчас нет.")
+        return
+
+    lines = []
+    buttons = []
+
+    for slot in slots:
+        start = timezone.localtime(slot.start_time)
+        end = timezone.localtime(slot.end_time)
+
+        line = (
+            f"ID {slot.id}: {slot.hall.name} — "
+            f"{start.strftime('%d.%m.%Y %H:%M')}–{end.strftime('%H:%M')}"
+        )
+        if slot.reason:
+            line += f" ({slot.reason})"
+        lines.append(line)
+
+        btn_text = f"❌ {slot.hall.name} {start.strftime('%d.%m %H:%M')}"
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    btn_text,
+                    callback_data=f"unblock_slot:{slot.id}",
+                )
+            ]
+        )
+
+    text = "Активные блокировки:\n\n" + "\n".join(lines)
+
+    update.message.reply_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+
+def unblock_slot_callback(update: Update, context: CallbackContext):
+    """
+    Обработка нажатия на кнопку 'unblock_slot:<id>' — снятие блокировки.
+    """
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if not is_admin(user_id):
+        query.answer("У вас нет прав для снятия блокировок.")
+        return
+
+    data = query.data  # ожидаем 'unblock_slot:<id>'
+    try:
+        _, slot_id_str = data.split(":")
+        slot_id = int(slot_id_str)
+    except Exception:
+        query.answer("Некорректные данные.")
+        return
+
+    try:
+        slot = BlockedSlot.objects.get(id=slot_id)
+    except BlockedSlot.DoesNotExist:
+        query.answer("Блокировка уже удалена.")
+        # Можно ещё отредактировать сообщение, но не обязательно
+        return
+
+    slot.delete()
+    query.answer("Блокировка снята.")
+    # По желанию можно обновить текст сообщения:
+    query.edit_message_text("Блокировка снята.")
+

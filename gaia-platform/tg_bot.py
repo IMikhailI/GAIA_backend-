@@ -31,7 +31,11 @@ from bot.menu_files import (
     menu_file_remove_callback,
 )
 
-from bot.block_time import build_block_time_conversation
+from bot.block_time import (
+    build_block_time_conversation,
+    list_blocked_slots,
+    unblock_slot_callback,
+)
 
 
 def main():
@@ -49,6 +53,10 @@ def main():
     dp.add_handler(CommandHandler("menu_list", menu_list))
 
     dp.add_handler(build_block_time_conversation())
+
+    # список блокировок и снятие
+    dp.add_handler(CommandHandler("blocked_slots", list_blocked_slots))
+    dp.add_handler(CallbackQueryHandler(unblock_slot_callback, pattern=r"^unblock_slot:"))
 
     # Все текстовые сообщения (не команды) — работа с меню и вводом даты
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_menu))

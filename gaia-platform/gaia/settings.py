@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "shop",
     "menus",
     "api",
+    "reviews",
 ]
 
 REST_FRAMEWORK = {

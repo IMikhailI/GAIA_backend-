@@ -4,7 +4,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAdminUser
 
+from reviews.models import Review
 from halls.models import Hall, BlockedSlot
 from halls.services import get_available_slots
 from booking.models import Booking
@@ -18,8 +20,15 @@ from .serializers import (
     BookingSerializer,
     AdminBookingActionSerializer,
     BlockedSlotSerializer,
+    ReviewSerializer
 )
 
+class ReviewListAPIView(generics.ListAPIView):
+    """
+    GET /api/reviews/ — список опубликованных отзывов о кофейне.
+    """
+    queryset = Review.objects.filter(is_published=True).order_by("sort_order", "-created_at")
+    serializer_class = ReviewSerializer
 
 class HallListAPIView(generics.ListAPIView):
     queryset = Hall.objects.all()
@@ -160,3 +169,52 @@ class AdminBlockCreateAPIView(generics.CreateAPIView):
 
     serializer_class = BlockedSlotSerializer
     queryset = BlockedSlot.objects.all()
+
+
+class BlockedSlotListAPIView(generics.ListAPIView):
+    """
+    GET /api/blocked-slots/?hall=<id>&date=YYYY-MM-DD
+
+    Возвращает список заблокированных интервалов.
+    Если date передан — только блокировки, пересекающие этот день.
+    """
+    serializer_class = BlockedSlotSerializer
+    permission_classes = [IsAdminUser]  # или AllowAny, если нужно отдать всем
+
+    def get_queryset(self):
+        qs = BlockedSlot.objects.all().order_by("start_time")
+
+        hall_id = self.request.query_params.get("hall")
+        if hall_id:
+            qs = qs.filter(hall_id=hall_id)
+
+        date_str = self.request.query_params.get("date")
+        if date_str:
+            try:
+                d = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                # некорректный формат — просто вернём пустой queryset
+                return BlockedSlot.objects.none()
+
+            # блокировки, пересекающие этот день
+            start_of_day = datetime.combine(d, datetime.min.time())
+            end_of_day = datetime.combine(d, datetime.max.time())
+
+            from django.utils import timezone
+            tz = timezone.get_current_timezone()
+            start_of_day = timezone.make_aware(start_of_day, tz)
+            end_of_day = timezone.make_aware(end_of_day, tz)
+
+            qs = qs.filter(start_time__lt=end_of_day, end_time__gt=start_of_day)
+
+        return qs
+
+class BlockedSlotDestroyAPIView(generics.DestroyAPIView):
+    """
+    DELETE /api/blocked-slots/<id>/
+
+    Отменяет (удаляет) блокировку.
+    """
+    queryset = BlockedSlot.objects.all()
+    serializer_class = BlockedSlotSerializer
+    permission_classes = [IsAdminUser]
