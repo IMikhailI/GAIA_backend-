@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from .telegram import send_telegram_message
-
+from .models import TelegramAdmin
 
 def send_booking_notifications(booking):
     """
@@ -56,9 +56,9 @@ def send_booking_notifications(booking):
             fail_silently=True,
         )
 
-     # 3. Администратору в Telegram
-    admin_chat_id = getattr(settings, "TELEGRAM_ADMIN_CHAT_ID", None)
-    if admin_chat_id:
+    # 3. Администратору в Telegram
+    admins = TelegramAdmin.objects.filter(is_active=True)
+    if admins.exists():
         text = (
             "<b>Новая заявка на бронирование</b> 🔔💰\n\n"
             f"ID: {booking.id}\n"
@@ -71,7 +71,13 @@ def send_booking_notifications(booking):
             f"Стоимость: {booking.total_price} руб.\n"
             f"Комментарий: {booking.comment or '—'}"
         )
-        send_telegram_message(admin_chat_id, text)
+        for admin in admins:
+            try:
+                send_telegram_message(admin.telegram_user_id, text)
+            except Exception:
+                # одного не смогли уведомить — остальные всё равно получат
+                continue
+
 
 
 def send_booking_status_update_notification(booking):
