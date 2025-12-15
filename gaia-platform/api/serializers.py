@@ -4,6 +4,8 @@ from halls.models import Hall, BlockedSlot
 from booking.models import Booking
 from booking import services as booking_services
 from reviews.models import Review
+from notifications.services import send_booking_notifications
+
 
 class HallSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,16 +90,17 @@ class BookingSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Создание брони:
-        - считаем duration_hours
+        - считаем duration_hours (если по какой-то причине не попало из validate)
         - считаем цену
         - создаём Booking
-        - пробуем отправить уведомления
+        - отправляем уведомления (email + телеграм) через единый сервис
         """
         hall = validated_data["hall"]
         start_time = validated_data["start_time"]
         end_time = validated_data["end_time"]
-        duration_hours = validated_data.get("duration_hours")
 
+        # duration_hours уже проброшен в validate, но на всякий случай досчитаем
+        duration_hours = validated_data.get("duration_hours")
         if duration_hours is None:
             delta_seconds = (end_time - start_time).total_seconds()
             duration_hours = int(delta_seconds // 3600) or 1
@@ -120,12 +123,16 @@ class BookingSerializer(serializers.ModelSerializer):
             comment=validated_data.get("comment", ""),
         )
 
-        # уведомления — безопасно, чтобы не валить создание брони
+        # Уведомления: используем существующий сервис,
+        # который уже умеет слать и телеграм, и email.
         try:
-            from notifications import services as notification_services
-            notification_services.send_booking_created_notifications(booking)
-        except Exception:
-            pass
+            send_booking_notifications(booking)
+        except Exception as e:
+            # Чтобы не ломать создание брони, ошибки уведомлений
+            # глушим, но в режиме DEBUG их имеет смысл логировать.
+            from django.conf import settings
+            if settings.DEBUG:
+                print(f"send_booking_notifications error: {e}")
 
         return booking
 
