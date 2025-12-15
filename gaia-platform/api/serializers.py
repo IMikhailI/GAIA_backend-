@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from halls.models import Hall, BlockedSlot
 from booking.models import Booking
+from booking import services as booking_services
 from reviews.models import Review
 
 class HallSerializer(serializers.ModelSerializer):
@@ -35,6 +36,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "end_time",
             "customer_name",
             "customer_phone",
+            "customer_email",
             "comment",
             "status",
             "total_price",
@@ -49,13 +51,13 @@ class BookingSerializer(serializers.ModelSerializer):
         - слот свободен
         """
         hall = attrs.get("hall")
-        date = attrs.get("date")
+        #date = attrs.get("date")
         start_time = attrs.get("start_time")
         end_time = attrs.get("end_time")
 
-        if not all([hall, date, start_time, end_time]):
+        if not all([hall, start_time, end_time]):
             raise serializers.ValidationError(
-                "hall_id, date, start_time, end_time обязательны"
+                "hall_id, start_time, end_time обязательны"
             )
 
         if start_time >= end_time:
@@ -66,7 +68,7 @@ class BookingSerializer(serializers.ModelSerializer):
         # Проверяем доступность через booking.services
         if not booking_services.is_slot_available(
             hall=hall,
-            date=date,
+            #date=date,
             start_time=start_time,
             end_time=end_time,
         ):
