@@ -18,7 +18,6 @@ class HallSerializer(serializers.ModelSerializer):
             "photo",
         ]
 
-
 class BookingSerializer(serializers.ModelSerializer):
     hall_id = serializers.PrimaryKeyRelatedField(
         queryset=Hall.objects.all(),
@@ -34,6 +33,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "hall_id",
             "start_time",
             "end_time",
+            "duration_hours",
             "customer_name",
             "customer_phone",
             "customer_email",
@@ -41,17 +41,17 @@ class BookingSerializer(serializers.ModelSerializer):
             "status",
             "total_price",
         ]
-        read_only_fields = ["status", "total_price", "hall"]
+        # hall и duration_hours заполняются на бэкенде
+        read_only_fields = ["status", "total_price", "hall", "duration_hours"]
 
     def validate(self, attrs):
         """
         Общая валидация:
         - есть ли зал
         - start < end
-        - слот свободен
+        - слот свободен (учитывая Booking и BlockedSlot)
         """
         hall = attrs.get("hall")
-        #date = attrs.get("date")
         start_time = attrs.get("start_time")
         end_time = attrs.get("end_time")
 
@@ -62,57 +62,73 @@ class BookingSerializer(serializers.ModelSerializer):
 
         if start_time >= end_time:
             raise serializers.ValidationError(
-                "Время начала должно быть меньше времени окончания"
+                {"end_time": "Время окончания должно быть позже начала"}
             )
 
-        # Проверяем доступность через booking.services
+        # считаем длительность в часах
+        delta_seconds = (end_time - start_time).total_seconds()
+        duration_hours = int(delta_seconds // 3600)
+        if duration_hours <= 0:
+            duration_hours = 1  # минимально 1 час
+
+        # проверяем, что слот свободен
         if not booking_services.is_slot_available(
             hall=hall,
-            #date=date,
             start_time=start_time,
-            end_time=end_time,
+            duration_hours=duration_hours,
         ):
             raise serializers.ValidationError(
                 "Выбранный временной диапазон уже занят или заблокирован"
             )
 
+        # прокидываем duration_hours дальше, чтобы не считать второй раз
+        attrs["duration_hours"] = duration_hours
         return attrs
 
     def create(self, validated_data):
         """
         Создание брони:
-        - выставляем статус
+        - считаем duration_hours
         - считаем цену
-        - отправляем уведомления
+        - создаём Booking
+        - пробуем отправить уведомления
         """
         hall = validated_data["hall"]
-        date = validated_data["date"]
         start_time = validated_data["start_time"]
         end_time = validated_data["end_time"]
+        duration_hours = validated_data.get("duration_hours")
 
-        # расчёт цены
+        if duration_hours is None:
+            delta_seconds = (end_time - start_time).total_seconds()
+            duration_hours = int(delta_seconds // 3600) or 1
+
         total_price = booking_services.calculate_total_price(
             hall=hall,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
+            duration_hours=duration_hours,
         )
 
         booking = Booking.objects.create(
-            status="new",  # или Booking.STATUS_NEW / Booking.Status.NEW — как у тебя в модели
+            hall=hall,
+            start_time=start_time,
+            end_time=end_time,
+            duration_hours=duration_hours,
             total_price=total_price,
-            **validated_data,
+            status="new",
+            customer_name=validated_data["customer_name"],
+            customer_phone=validated_data["customer_phone"],
+            customer_email=validated_data["customer_email"],
+            comment=validated_data.get("comment", ""),
         )
 
-        # Уведомления (если у тебя в notifications.services уже есть что-то похожее —
-        # просто вызови его)
+        # уведомления — безопасно, чтобы не валить создание брони
         try:
+            from notifications import services as notification_services
             notification_services.send_booking_created_notifications(booking)
         except Exception:
-            # В проде можно залогировать, но не валить создание брони из-за падения email
             pass
 
         return booking
+
 
 
 class AdminBookingActionSerializer(serializers.Serializer):
